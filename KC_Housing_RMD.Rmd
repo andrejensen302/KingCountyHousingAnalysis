@@ -6,7 +6,11 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
+<<<<<<< HEAD
 #test 12
+=======
+#test 12345
+>>>>>>> d4e5fed318bfc03ca0c895966223aec75362bb20
 
 ```
 
