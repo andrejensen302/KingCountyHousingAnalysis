@@ -1,0 +1,415 @@
+#Load libraries
+
+library(dplyr)
+library(ggplot2)
+library(ggdendro)
+library(stringr)
+library(corrgram)
+library(randomForest)
+library(GGally)
+library(caret)
+library(tidyverse)
+library(readxl)
+library(rpart)
+library(rpart.plot)
+library(rsample)
+
+#Set seed for consistent output
+set.seed(1234)
+
+#Data wrangling completed in Excel
+#All of the data was in one column separted by commas, used delimeter to separate the values into their individual columns
+
+#Import dataset
+setwd("~/Documents/UW Data Analytics")
+kc_house_data_1 <- read_excel("kc_house_data (1).xls")
+
+kc_house_data_1 %>% glimpse()
+house_data_set = kc_house_data_1
+
+#Prepare dataset
+
+#View class types of variables for possible data type conversion
+class(kc_house_data_1$id)
+class(kc_house_data_1$view)
+class(kc_house_data_1$grade)
+class(kc_house_data_1$condition)
+class(kc_house_data_1$lat)
+class(kc_house_data_1$long)
+class(kc_house_data_1$price)
+
+#Remove columns from dataset that won't contribute to a good predictation model
+house_data_set$id <- NULL
+house_data_set$zipcode <- NULL
+house_data_set$yr_renovated <- NULL
+
+#In the interest of creating a simpler model, we are removing the date from the dataset and not look at seasonal trends
+house_data_set$date <- NULL
+
+#Change variable types
+house_data_set = house_data_set %>% mutate(waterfront = as.factor(waterfront),
+                                           view = as.factor(view),
+                                           grade = as.factor(grade), 
+                                           condition = as.factor(condition), 
+                                           lat = as.factor(lat), long = as.factor(long))
+
+#Verify variable type changes
+is.factor(house_data_set$waterfront)
+is.factor(house_data_set$view)
+is.factor(house_data_set$grade)
+is.factor(house_data_set$condition)
+is.factor(house_data_set$lat)
+is.factor(house_data_set$long)
+
+
+#Feature engineering - create categorical variables to analyze mean price against various criteria in the dataset.
+
+#Create variable for Newer Construction (2004 or newer) criteria
+house_data_set = house_data_set %>% mutate(new_construction = ifelse(yr_built >= 2004, TRUE, FALSE))
+
+#Create new variable for four bedroom criteria
+house_data_set = house_data_set %>% mutate(four_bedroom = ifelse(bedrooms >= 4, TRUE, FALSE))
+
+#Create new variable for 3 bathroom criteria
+house_data_set= house_data_set %>% mutate(three_bathroom = ifelse(bathrooms >= 3.00, TRUE, FALSE))
+
+#Create new variable for 4,000 sqft living criteria
+house_data_set= house_data_set %>% mutate(sqft_living_criteria = ifelse(sqft_living >= 4000, TRUE, FALSE))
+
+#Create new variable for 4,000 sqft15 living criteria
+house_data_set= house_data_set %>% mutate(sqft_living15_criteria = ifelse(sqft_living15 >= 4000, TRUE, FALSE))
+
+#Create new variable for Good grade (7+) criteria
+#summary shows that housing grades range from 1 to 13
+house_data_set$grade %>% summary()
+good_grade_values <- c('7', '8', '9', '10', '11', '12', '13')
+house_data_set= house_data_set %>% mutate(good_grade = ifelse(grade %in% good_grade_values, TRUE, FALSE))
+
+#Create variable for good condition (5+) criteria
+house_data_set$condition %>% summary
+good_condition_values <- c('5')
+house_data_set = house_data_set %>% mutate(good_condition = ifelse(condition %in% good_condition_values, TRUE, FALSE))
+
+#Create new variable for 5,000 sqft lot criteria
+house_data_set= house_data_set %>% mutate (sqft_lot_criteria = ifelse(sqft_lot >= 5000, TRUE, FALSE))
+
+#Create new variable for 5,000 sqft_lot15 criteria
+house_data_set= house_data_set %>% mutate (sqft_lot15_criteria = ifelse(sqft_lot15 >= 5000, TRUE, FALSE))
+
+#Add column for log of sqft_living
+
+house_data_set = house_data_set %>% mutate (log_sqft_living = log10(sqft_living))
+
+#Add column for square root of sqft_living
+
+house_data_set = house_data_set %>% mutate(sqrt_sqft_living = sqrt(sqft_living))
+
+#Show quick summary of average prices grouped by the individual criteria above 
+#(four bedroom, three bathroom, 4,000 sqft living, 7+ good grade, 5+ good condition, & 5,000 sqft lot)
+
+#Average price grouped by four bedroom houses
+avg_price_of_four_bedrooms = house_data_set %>% na.omit() %>% 
+  group_by(four_bedroom) %>% 
+  summarize(mean_price = mean(price))
+
+#Average price grouped by three bathrooms houses
+avg_price_of_three_bathrooms = house_data_set %>% na.omit() %>%
+  group_by(three_bathroom) %>% 
+  summarize(mean_price = mean(price)) 
+
+#Average price grouped by 4,000 sqft_living houses
+avg_price_of_4000_sqft = house_data_set %>% na.omit() %>%
+  group_by(sqft_living_criteria) %>% 
+  summarize(mean_price = mean(price)) 
+
+#Average price grouped by 4,000 sqft_living15 houses
+avg_price_of_4000_sqft15 = house_data_set %>% na.omit() %>%
+  group_by(sqft_living15_criteria) %>% 
+  summarize(mean_price = mean(price)) 
+
+#Average price grouped by 5,000 sqft lot houses
+avg_price_of_5000_sqft_lot = house_data_set %>% na.omit() %>%
+  group_by(sqft_lot_criteria) %>% 
+  summarize(mean_price = mean(price)) 
+
+#Average price grouuped by 5,000 sqft_lot15 houses
+avg_price_of_5000_sqft_lot = house_data_set %>% na.omit() %>%
+  group_by(sqft_lot15_criteria) %>% 
+  summarize(mean_price = mean(price)) 
+
+#Average prices grouped by good condition (5+) houses
+avg_price_of_good_condition = house_data_set %>% na.omit() %>%
+  group_by(good_condition) %>% 
+  summarize(mean_price = mean(price)) 
+
+#Average prices grouped by new construction (>2004 construction) houses
+avg_price_of_new_construction = house_data_set %>% na.omit() %>%
+  group_by(new_construction) %>% 
+  summarize(mean_price = mean(price)) 
+
+#Average prices grouped by good grade (7+)
+avg_price_of_good_grade = house_data_set %>% na.omit() %>%
+  group_by(good_grade) %>% 
+  summarize(mean_price = mean(price)) 
+
+#View summary of data
+house_data_set %>% glimpse()
+house_data_set %>% summary()
+
+housing_data_sequence_plot <- function (data, col){
+  
+  print_sequence <- data %>% ggplot(mapping = aes_string(x= col %>% seq_along(), y = col))+
+    geom_jitter (alpha = .5) + 
+    geom_smooth(method="loess") +
+    theme_classic() +
+    labs(title=str_c("Natural sequence of ", col, " data"),
+         subtitle="Using seq_along()")
+  
+  print_sequence %>% print()
+}
+
+#Plot sequence plots
+house_data_set %>% housing_data_sequence_plot("bedrooms")
+house_data_set %>% housing_data_sequence_plot("price")
+house_data_set %>% housing_data_sequence_plot("bathrooms")
+house_data_set %>% housing_data_sequence_plot("sqft_living")
+house_data_set %>% housing_data_sequence_plot("sqft_lot")
+
+
+#Violin plot to analysize housing data
+housing_data_violin_plot <- function(data, x_col,y_col){
+  
+  print_housing <- data %>% ggplot(mapping = aes_string(x = x_col, y= y_col))+
+    geom_violin(draw_quantiles = c(0.25, .05, 0.75),
+                fill = 'blue', alpha = 0.3, size = 1.0)+
+    labs(title = "Housing data analysis",
+         subtitle = str_c("relationship between ", x_col, " & ", y_col))
+  
+  print_housing %>% print()
+}
+
+#Plot violin plots
+house_data_set %>% housing_data_violin_plot("grade", "price")
+house_data_set %>% housing_data_violin_plot("condition" ,"price")
+house_data_set %>% housing_data_violin_plot("waterfront", "price")
+house_data_set %>% housing_data_violin_plot("view", "price")
+
+#Plot and display correlation between price vs. bedrooms/bathrooms/sqft_living/sqft_lot/floors/price
+ggpairs(house_data_set[,c(2:6,1)])
+
+#Calculate correlation coefficients for all variables between other variables
+
+help("setdiff")
+
+#Correlation coefficient of price to all other numeric variables
+i1 <- sapply(house_data_set, is.numeric)
+y1 <- "price"
+x1 <- setdiff(names(house_data_set)[i1], y1)
+cor_of_price_to_vars <- cor(house_data_set[x1], house_data_set[[y1]])
+
+#Correlation coefficient of bedrooms to all other numeric variables
+i2 <- sapply(house_data_set, is.numeric)
+y2 <- "bedrooms"
+x2 <- setdiff(names(house_data_set)[i2], y2)
+cor_of_bedrooms_to_vars <- cor(house_data_set[x2], house_data_set[[y2]])
+
+#Correlation coefficient of sqft_above to all other numeric variables
+i3 <- sapply(house_data_set, is.numeric)
+y3 <- "sqft_above"
+x3 <- setdiff(names(house_data_set)[i3], y3)
+cor_of_sqft_above_to_vars <- cor(house_data_set[x3], house_data_set[[y3]])
+
+#Correlation coefficient of sqft_living to all other numeric variables
+i4 <- sapply(house_data_set, is.numeric)
+y4 <- "sqft_living"
+x4 <- setdiff(names(house_data_set)[i4], y4)
+cor_of_sqft_living_to_vars <- cor(house_data_set[x4], house_data_set[[y4]])
+
+#Correlation coefficient of sqft_lot to all other numeric variables
+i5 <- sapply(house_data_set, is.numeric)
+y5 <- "sqft_lot"
+x5 <- setdiff(names(house_data_set)[i5], y5)
+cor_of_sqft_lot_to_vars <- cor(house_data_set[x5], house_data_set[[y5]])
+
+#Correlation coefficient of sqft_lot15 to all other numeric variables
+i6 <- sapply(house_data_set, is.numeric)
+y6 <- "sqft_lot15"
+x6 <- setdiff(names(house_data_set)[i6], y6)
+cor_of_sqft_lot15_to_vars <- cor(house_data_set[x6], house_data_set[[y6]])
+
+#Correlation coefficient of sqft_living15 to all other numeric variables
+i7 <- sapply(house_data_set, is.numeric)
+y7 <- "sqft_living15"
+x7 <- setdiff(names(house_data_set)[i7], y7)
+cor_of_sqft_living15_to_vars <- cor(house_data_set[x7], house_data_set[[y7]])
+
+#Correlation coefficient of floors to all other numeric variables
+i8 <- sapply(house_data_set, is.numeric)
+y8 <- "floors"
+x8 <- setdiff(names(house_data_set)[i8], y8)
+cor_of_floors_to_vars <- cor(house_data_set[x8], house_data_set[[y8]])
+
+#Correlation coefficient of sqft_basement to all other numeric variables
+i9 <- sapply(house_data_set, is.numeric)
+y9 <- "sqft_basement"
+x9 <- setdiff(names(house_data_set)[i9], y9)
+cor_of_sqft_basement_to_vars <- cor(house_data_set[x9], house_data_set[[y9]])
+
+#Correlation coefficient of yr_built to all other numeric variables
+i10 <- sapply(house_data_set, is.numeric)
+y10 <- "yr_built"
+x10 <- setdiff(names(house_data_set)[i10], y10)
+cor_of_yr_built_to_vars <- cor(house_data_set[x10], house_data_set[[y10]])
+
+#Spot check formula above 
+cor.test(house_data_set$price, house_data_set$sqft_lot15) #.082 correlation
+cor.test(house_data_set$price, house_data_set$sqft_living) #.702 correlation
+cor.test(house_data_set$price, house_data_set$sqft_above) #.606 correlation
+cor.test(house_data_set$price, house_data_set$sqft_living15) #.585 correlation
+cor.test(house_data_set$price, house_data_set$bathrooms) #.525 correlation
+cor.test(house_data_set$price, house_data_set$sqft_basement) #.324 correlation
+cor.test(house_data_set$price, house_data_set$bedrooms) #.308 correlation
+cor.test(house_data_set$price, house_data_set$floors) #.257 correlation
+cor.test(house_data_set$price, house_data_set$sqft_lot) #.089 correlation
+cor.test(house_data_set$price, house_data_set$yr_built) #.054 correlation-
+
+#Remove true/false variables for model training datasets
+
+model_data_set = select(house_data_set, -four_bedroom, -three_bathroom, -sqft_living15_criteria, -good_condition, -new_construction,
+                        -good_grade, -sqft_lot_criteria, -sqft_lot15_criteria)
+
+#Split data into test and train set
+in_train = createDataPartition(y = model_data_set$price, p = .80, list = FALSE)
+head(in_train)
+
+#Display all columns in both training and testing sets
+house_data_training_set = model_data_set[in_train, ]
+house_data_testing_set = model_data_set[-in_train, ]
+
+#Preprocessing steps (centering and scaling)
+#bedrooms, bathrooms, sqft_living, sqft_lot, floors, sqft_above,sqft_basement
+
+# Look for and remove near zero variances (sqft_basement, wate)
+nearZeroVar(house_data_training_set, saveMetrics = TRUE)
+
+help("preProcess")
+preprocessing_steps = preProcess(select(model_data_set, bedrooms, bathrooms, sqft_living, sqft_lot, floors, sqft_above, sqft_basement),
+           method = c('center', 'scale', 'nzv'))
+
+house_data_train_proc = predict(preprocessing_steps, newdata = house_data_training_set)
+house_data_test_proc = predict(preprocessing_steps, newdata = house_data_testing_set)
+
+head(house_data_train_proc)
+head(house_data_test_proc)
+
+#Create linear regression model
+
+model_fit_lm = train(price ~ grade + bathrooms + view + sqft_living + sqft_above + sqft_lot + bedrooms + floors + condition,
+                     data = house_data_train_proc,
+                     method = 'lm',
+                     metric = 'RMSE',
+                     tuneLength = 10,
+                     trControl = trainControl(method = 'cv', number= 3, savePredictions = TRUE))
+
+pred_lm = predict(model_fit_lm, newdata = house_data_test_proc)
+
+head(pred_lm)
+#Display model outcome
+summary(model_fit_lm)
+
+#View the RMSE (linear regression model)
+
+postResample(pred = pred_lm, obs = house_data_test_proc$price)
+
+#Create new dataframe for errors - linear regression
+help(data.frame)
+errors_lm = data.frame(predicted_price = pred_lm, observed_price = house_data_test_proc$price,
+                       error = pred_lm - house_data_test_proc$price)
+
+head(errors_lm)
+tail(errors_lm)
+
+#plot with the assumption that it rises as fast as it goes forward (slope  = 1)
+plot_lm <- ggplot(data = errors_lm, aes(x = predicted_price, y = observed_price)) +
+  geom_point() + 
+  geom_abline(intercept = 0, slope = 1, color = 'red') +
+  ggtitle("Predicted vs Observed price for KC houses using a linear regression model")
+
+plot_lm
+
+#Decision tree regression models
+
+#Growing a single tree
+
+summary(house_data_training_set$grade)
+
+tree_model_all_variables <- rpart(
+                             formula= price ~.,
+                             data = house_data_train_proc,
+                             method = 'anova',
+                             control = rpart.control(minsplit = 1500, cp=.001)
+                             )
+
+#Show variable importance plot of variables in the single tree model
+varImp(tree_model_all_variables)
+
+#Single tree model with limited predictor variables from variables scoring high in varImp
+tree_model <- rpart(
+  formula = price ~ grade + bathrooms + view + sqft_living + sqft_above + sqft_lot + bedrooms + floors + condition,
+  data = house_data_train_proc,
+  method = 'anova',
+  control = rpart.control(minsplit = 1750, cp=.001)
+)
+
+rpart.plot(tree_model)
+summary(tree_model)
+
+#Bagging tree model
+
+train_control_bagged_model <- trainControl(method="cv", number=3, savePredictions = TRUE)
+
+bagged_tree_model <- train(
+  price ~ grade + bathrooms + view + sqft_living + sqft_above + sqft_lot + bedrooms + floors + condition,
+  data = house_data_train_proc,
+  method = 'treebag',
+  trControl = train_control_bagged_model,
+  importance = TRUE
+)
+
+#Random Forest Model
+
+random_forest_tree_model <- train(
+  price ~ grade + bathrooms + view + sqft_living + sqft_above + sqft_lot + bedrooms + floors + condition,
+  data = house_data_train_proc,
+  method = 'rf',
+  trControl = train_control_bagged_model,
+  importance = TRUE,
+  ntree=3
+)
+  
+random_forest_tree_model
+summary(random_forest_tree_model)
+
+#Model comparison
+
+model_results = resamples(list(model_fit_lm = model_fit_lm,
+                               bagged_tree_model = bagged_tree_model,
+                               random_forest_tree_model = random_forest_tree_model))
+
+summary(model_results)
+
+dotplot(model_results)
+
+#Make a prediction using the = linear regression model
+
+to_predict <- model_data_set[0,]
+to_predict[1,]$sqft_living <- 4000
+to_predict[1,]$sqft_above <- 4000
+to_predict[1,]$sqft_lot <- 5000
+to_predict[1,]$bedrooms <- 4
+to_predict[1,]$bathrooms <- 3
+
+predict(model_fit_lm, newdata = to_predict)
+
+
+
