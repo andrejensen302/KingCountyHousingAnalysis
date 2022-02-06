@@ -1,6 +1,6 @@
 ---
 title: "KC_Housing_Final"
-output: html_document
+output: github_document
 ---
 
 ```{r}
