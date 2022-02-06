@@ -32,8 +32,11 @@ set.seed(1234)
 #All of the data was in one column separted by commas, used delimeter to separate the values into their individual columns
 
 #Import dataset
-setwd("~/Documents/UW Data Analytics")
+setwd("~/Documents/RStudio_Uploads/King_County_Housing_Analysis")
 kc_house_data_1 <- read_excel("kc_house_data (1).xls")
+
+kc_house_data_1 %>% glimpse()
+house_data_set = kc_house_data_1
 
 ```
 
@@ -84,7 +87,6 @@ is.factor(house_data_set$long)
 You can also embed plots, for example:
 
 ```{r pressure, echo=FALSE}
-plot(pressure) test
 ```
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
