@@ -434,5 +434,65 @@ house_data_set %>% summary()
     ##  Max.   :4.132   Max.   :116.36  
     ## 
 
+    ## `geom_smooth()` using formula 'y ~ x'
+
+![](KC_Housing_RMD_files/figure-gfm/Sequence%20plots-1.png)<!-- -->
+
+    ## `geom_smooth()` using formula 'y ~ x'
+
+![](KC_Housing_RMD_files/figure-gfm/Sequence%20plots-2.png)<!-- -->
+
+    ## `geom_smooth()` using formula 'y ~ x'
+
+![](KC_Housing_RMD_files/figure-gfm/Sequence%20plots-3.png)<!-- -->
+
+    ## `geom_smooth()` using formula 'y ~ x'
+
+![](KC_Housing_RMD_files/figure-gfm/Sequence%20plots-4.png)<!-- -->
+
+    ## `geom_smooth()` using formula 'y ~ x'
+
+![](KC_Housing_RMD_files/figure-gfm/Sequence%20plots-5.png)<!-- -->
+
+    ## Warning: Groups with fewer than two data points have been dropped.
+
+    ## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm):
+    ## collapsing to unique 'x' values
+    
+    ## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm):
+    ## collapsing to unique 'x' values
+    
+    ## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm):
+    ## collapsing to unique 'x' values
+
+![](KC_Housing_RMD_files/figure-gfm/pressure-1.png)<!-- -->
+
+    ## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm):
+    ## collapsing to unique 'x' values
+    
+    ## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm):
+    ## collapsing to unique 'x' values
+    
+    ## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm):
+    ## collapsing to unique 'x' values
+
+![](KC_Housing_RMD_files/figure-gfm/pressure-2.png)<!-- -->
+
+    ## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm):
+    ## collapsing to unique 'x' values
+
+![](KC_Housing_RMD_files/figure-gfm/pressure-3.png)<!-- -->
+
+    ## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm):
+    ## collapsing to unique 'x' values
+    
+    ## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm):
+    ## collapsing to unique 'x' values
+    
+    ## Warning in regularize.values(x, y, ties, missing(ties), na.rm = na.rm):
+    ## collapsing to unique 'x' values
+
+![](KC_Housing_RMD_files/figure-gfm/pressure-4.png)<!-- -->
+
 Note that the `echo = FALSE` parameter was added to the code chunk to
 prevent printing of the R code that generated the plot.
