@@ -77,7 +77,7 @@ is.factor(house_data_set$lat)
 is.factor(house_data_set$long)
 ```
 
-```{r}
+```{r Feature Engineering}
 
 #Feature engineering - create categorical variables to analyze mean price against various criteria in the dataset.
 
@@ -179,12 +179,54 @@ house_data_set %>% summary()
 
 ```
 
+```{r Sequence plots, echo=FALSE}
+
+#echo=FALSE to generate pltots without printing the code
+
+housing_data_sequence_plot <- function (data, col){
+  
+  print_sequence <- data %>% ggplot(mapping = aes_string(x= col %>% seq_along(), y = col))+
+    geom_jitter (alpha = .5) + 
+    geom_smooth(method="loess") +
+    theme_classic() +
+    labs(title=str_c("Natural sequence of ", col, " data"),
+         subtitle="Using seq_along()")
+  
+  print_sequence %>% print()
+}
+
+#Plot sequence plots
+house_data_set %>% housing_data_sequence_plot("bedrooms")
+house_data_set %>% housing_data_sequence_plot("price")
+house_data_set %>% housing_data_sequence_plot("bathrooms")
+house_data_set %>% housing_data_sequence_plot("sqft_living")
+house_data_set %>% housing_data_sequence_plot("sqft_lot")
+
+```
+
 
 
 ```{r pressure, echo=FALSE}
 
-#echo=FALSE to generate pltso without printing the code
+#echo=FALSE to generate pltots without printing the code
 
+#Violin plot to analysize housing data
+housing_data_violin_plot <- function(data, x_col,y_col){
+  
+  print_housing <- data %>% ggplot(mapping = aes_string(x = x_col, y= y_col))+
+    geom_violin(draw_quantiles = c(0.25, .05, 0.75),
+                fill = 'blue', alpha = 0.3, size = 1.0)+
+    labs(title = "Housing data analysis",
+         subtitle = str_c("relationship between ", x_col, " & ", y_col))
+  
+  print_housing %>% print()
+}
+
+#Plot violin plots
+house_data_set %>% housing_data_violin_plot("grade", "price")
+house_data_set %>% housing_data_violin_plot("condition" ,"price")
+house_data_set %>% housing_data_violin_plot("waterfront", "price")
+house_data_set %>% housing_data_violin_plot("view", "price")
 
 
 ```
