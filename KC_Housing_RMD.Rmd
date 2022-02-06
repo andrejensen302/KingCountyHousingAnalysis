@@ -3,14 +3,37 @@ title: "KC_Housing_Final"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r}
 
-<<<<<<< HEAD
-#test 12
-=======
-#test 12345
->>>>>>> d4e5fed318bfc03ca0c895966223aec75362bb20
+```
+
+
+```{r}
+#Load libraries
+
+library(dplyr)
+library(ggplot2)
+library(ggdendro)
+library(stringr)
+library(corrgram)
+library(randomForest)
+library(GGally)
+library(caret)
+library(tidyverse)
+library(readxl)
+library(rpart)
+library(rpart.plot)
+library(rsample)
+
+#Set seed for consistent output
+set.seed(1234)
+
+#Data wrangling completed in Excel
+#All of the data was in one column separted by commas, used delimeter to separate the values into their individual columns
+
+#Import dataset
+setwd("~/Documents/UW Data Analytics")
+kc_house_data_1 <- read_excel("kc_house_data (1).xls")
 
 ```
 
@@ -20,8 +43,40 @@ This is an R Markdown document. Markdown is a simple formatting syntax for autho
 
 When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
-```{r cars}
-summary(cars)
+```{r Prepare data set}
+#Prepare dataset
+
+#View class types of variables for possible data type conversion
+class(kc_house_data_1$id)
+class(kc_house_data_1$view)
+class(kc_house_data_1$grade)
+class(kc_house_data_1$condition)
+class(kc_house_data_1$lat)
+class(kc_house_data_1$long)
+class(kc_house_data_1$price)
+
+#Remove columns from dataset that won't contribute to a good predictation model
+house_data_set$id <- NULL
+house_data_set$zipcode <- NULL
+house_data_set$yr_renovated <- NULL
+
+#In the interest of creating a simpler model, we are removing the date from the dataset and not look at seasonal trends
+house_data_set$date <- NULL
+
+#Change variable types
+house_data_set = house_data_set %>% mutate(waterfront = as.factor(waterfront),
+                                           view = as.factor(view),
+                                           grade = as.factor(grade), 
+                                           condition = as.factor(condition), 
+                                           lat = as.factor(lat), long = as.factor(long))
+
+#Verify variable type changes
+is.factor(house_data_set$waterfront)
+is.factor(house_data_set$view)
+is.factor(house_data_set$grade)
+is.factor(house_data_set$condition)
+is.factor(house_data_set$lat)
+is.factor(house_data_set$long)
 ```
 
 ## Including Plots
