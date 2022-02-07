@@ -35,11 +35,6 @@ house_data_set = kc_house_data_1
 
 ```
 
-## R Markdown   make a difference
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
 ```{r Prepare data set}
 #Prepare dataset
@@ -231,7 +226,241 @@ house_data_set %>% housing_data_violin_plot("view", "price")
 
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r, echo=FALSE}
 
-#test123
+#Plot and display correlation between price vs. bedrooms/bathrooms/sqft_living/sqft_lot/floors/price
+ggpairs(house_data_set[,c(2:6,1)])
+
+```
+
+```{r}
+
+#Calculate correlation coefficients for all variables between other variables
+
+help("setdiff")
+
+#Correlation coefficient of price to all other numeric variables
+i1 <- sapply(house_data_set, is.numeric)
+y1 <- "price"
+x1 <- setdiff(names(house_data_set)[i1], y1)
+cor_of_price_to_vars <- cor(house_data_set[x1], house_data_set[[y1]])
+
+#Correlation coefficient of bedrooms to all other numeric variables
+i2 <- sapply(house_data_set, is.numeric)
+y2 <- "bedrooms"
+x2 <- setdiff(names(house_data_set)[i2], y2)
+cor_of_bedrooms_to_vars <- cor(house_data_set[x2], house_data_set[[y2]])
+
+#Correlation coefficient of sqft_above to all other numeric variables
+i3 <- sapply(house_data_set, is.numeric)
+y3 <- "sqft_above"
+x3 <- setdiff(names(house_data_set)[i3], y3)
+cor_of_sqft_above_to_vars <- cor(house_data_set[x3], house_data_set[[y3]])
+
+#Correlation coefficient of sqft_living to all other numeric variables
+i4 <- sapply(house_data_set, is.numeric)
+y4 <- "sqft_living"
+x4 <- setdiff(names(house_data_set)[i4], y4)
+cor_of_sqft_living_to_vars <- cor(house_data_set[x4], house_data_set[[y4]])
+
+#Correlation coefficient of sqft_lot to all other numeric variables
+i5 <- sapply(house_data_set, is.numeric)
+y5 <- "sqft_lot"
+x5 <- setdiff(names(house_data_set)[i5], y5)
+cor_of_sqft_lot_to_vars <- cor(house_data_set[x5], house_data_set[[y5]])
+
+#Correlation coefficient of sqft_lot15 to all other numeric variables
+i6 <- sapply(house_data_set, is.numeric)
+y6 <- "sqft_lot15"
+x6 <- setdiff(names(house_data_set)[i6], y6)
+cor_of_sqft_lot15_to_vars <- cor(house_data_set[x6], house_data_set[[y6]])
+
+#Correlation coefficient of sqft_living15 to all other numeric variables
+i7 <- sapply(house_data_set, is.numeric)
+y7 <- "sqft_living15"
+x7 <- setdiff(names(house_data_set)[i7], y7)
+cor_of_sqft_living15_to_vars <- cor(house_data_set[x7], house_data_set[[y7]])
+
+#Correlation coefficient of floors to all other numeric variables
+i8 <- sapply(house_data_set, is.numeric)
+y8 <- "floors"
+x8 <- setdiff(names(house_data_set)[i8], y8)
+cor_of_floors_to_vars <- cor(house_data_set[x8], house_data_set[[y8]])
+
+#Correlation coefficient of sqft_basement to all other numeric variables
+i9 <- sapply(house_data_set, is.numeric)
+y9 <- "sqft_basement"
+x9 <- setdiff(names(house_data_set)[i9], y9)
+cor_of_sqft_basement_to_vars <- cor(house_data_set[x9], house_data_set[[y9]])
+
+#Correlation coefficient of yr_built to all other numeric variables
+i10 <- sapply(house_data_set, is.numeric)
+y10 <- "yr_built"
+x10 <- setdiff(names(house_data_set)[i10], y10)
+cor_of_yr_built_to_vars <- cor(house_data_set[x10], house_data_set[[y10]])
+
+#Spot check formula above 
+cor.test(house_data_set$price, house_data_set$sqft_lot15) #.082 correlation
+cor.test(house_data_set$price, house_data_set$sqft_living) #.702 correlation
+cor.test(house_data_set$price, house_data_set$sqft_above) #.606 correlation
+cor.test(house_data_set$price, house_data_set$sqft_living15) #.585 correlation
+cor.test(house_data_set$price, house_data_set$bathrooms) #.525 correlation
+cor.test(house_data_set$price, house_data_set$sqft_basement) #.324 correlation
+cor.test(house_data_set$price, house_data_set$bedrooms) #.308 correlation
+cor.test(house_data_set$price, house_data_set$floors) #.257 correlation
+cor.test(house_data_set$price, house_data_set$sqft_lot) #.089 correlation
+cor.test(house_data_set$price, house_data_set$yr_built) #.054 correlation-
+
+```
+
+```{r}
+
+
+#Remove true/false variables for model training datasets
+
+model_data_set = select(house_data_set, -four_bedroom, -three_bathroom, -sqft_living15_criteria, -good_condition, -new_construction,
+                        -good_grade, -sqft_lot_criteria, -sqft_lot15_criteria)
+
+#Split data into test and train set
+in_train = createDataPartition(y = model_data_set$price, p = .80, list = FALSE)
+head(in_train)
+
+#Display all columns in both training and testing sets
+house_data_training_set = model_data_set[in_train, ]
+house_data_testing_set = model_data_set[-in_train, ]
+
+#Preprocessing steps (centering and scaling)
+#bedrooms, bathrooms, sqft_living, sqft_lot, floors, sqft_above,sqft_basement
+
+# Look for and remove near zero variances (sqft_basement, wate)
+nearZeroVar(house_data_training_set, saveMetrics = TRUE)
+
+help("preProcess")
+preprocessing_steps = preProcess(select(model_data_set, bedrooms, bathrooms, sqft_living, sqft_lot, floors, sqft_above, sqft_basement),
+           method = c('center', 'scale', 'nzv'))
+
+house_data_train_proc = predict(preprocessing_steps, newdata = house_data_training_set)
+house_data_test_proc = predict(preprocessing_steps, newdata = house_data_testing_set)
+
+head(house_data_train_proc)
+head(house_data_test_proc)
+```
+
+```{r, echo=FALSE}
+
+#Create linear regression model
+
+model_fit_lm = train(price ~ grade + bathrooms + view + sqft_living + sqft_above + sqft_lot + bedrooms + floors + condition,
+                     data = house_data_train_proc,
+                     method = 'lm',
+                     metric = 'RMSE',
+                     tuneLength = 10,
+                     trControl = trainControl(method = 'cv', number= 3, savePredictions = TRUE))
+
+pred_lm = predict(model_fit_lm, newdata = house_data_test_proc)
+
+head(pred_lm)
+#Display model outcome
+summary(model_fit_lm)
+
+#View the RMSE (linear regression model)
+
+postResample(pred = pred_lm, obs = house_data_test_proc$price)
+
+#Create new dataframe for errors - linear regression
+help(data.frame)
+errors_lm = data.frame(predicted_price = pred_lm, observed_price = house_data_test_proc$price,
+                       error = pred_lm - house_data_test_proc$price)
+
+head(errors_lm)
+tail(errors_lm)
+
+#plot with the assumption that it rises as fast as it goes forward (slope  = 1)
+plot_lm <- ggplot(data = errors_lm, aes(x = predicted_price, y = observed_price)) +
+  geom_point() + 
+  geom_abline(intercept = 0, slope = 1, color = 'red') +
+  ggtitle("Predicted vs Observed price for KC houses using a linear regression model")
+
+plot_lm
+
+```
+
+```{r, echo=FALSE}
+
+#Decision tree regression models
+
+#Growing a single tree
+
+summary(house_data_training_set$grade)
+
+tree_model_all_variables <- rpart(
+                             formula= price ~.,
+                             data = house_data_train_proc,
+                             method = 'anova',
+                             control = rpart.control(minsplit = 1500, cp=.001)
+                             )
+
+#Show variable importance plot of variables in the single tree model
+varImp(tree_model_all_variables)
+
+#Single tree model with limited predictor variables from variables scoring high in varImp
+tree_model <- rpart(
+  formula = price ~ grade + bathrooms + view + sqft_living + sqft_above + sqft_lot + bedrooms + floors + condition,
+  data = house_data_train_proc,
+  method = 'anova',
+  control = rpart.control(minsplit = 1750, cp=.001)
+)
+
+rpart.plot(tree_model)
+summary(tree_model)
+
+```
+
+```{r}
+
+#Creating Bagging tree model
+
+train_control_bagged_model <- trainControl(method="cv", number=3, savePredictions = TRUE)
+
+bagged_tree_model <- train(
+  price ~ grade + bathrooms + view + sqft_living + sqft_above + sqft_lot + bedrooms + floors + condition,
+  data = house_data_train_proc,
+  method = 'treebag',
+  trControl = train_control_bagged_model,
+  importance = TRUE
+)
+
+```
+
+```{r, echo=FALSE}
+
+#Creating the Random Forest Model
+
+random_forest_tree_model <- train(
+  price ~ grade + bathrooms + view + sqft_living + sqft_above + sqft_lot + bedrooms + floors + condition,
+  data = house_data_train_proc,
+  method = 'rf',
+  trControl = train_control_bagged_model,
+  importance = TRUE,
+  ntree=3
+)
+  
+random_forest_tree_model
+summary(random_forest_tree_model)
+
+```
+
+```{r, echo=FALSE}
+
+#Model comparison
+
+model_results = resamples(list(model_fit_lm = model_fit_lm,
+                               bagged_tree_model = bagged_tree_model,
+                               random_forest_tree_model = random_forest_tree_model))
+
+summary(model_results)
+
+dotplot(model_results)
+```
+
 
