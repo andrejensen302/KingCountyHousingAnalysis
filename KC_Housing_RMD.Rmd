@@ -235,7 +235,7 @@ ggpairs(house_data_set[,c(2:6,1)])
 
 ```{r}
 
-#Calculate correlation coefficients for all variables between other variables
+#Calculate correlation coefficients for all variables between other variables. 123
 
 help("setdiff")
 
