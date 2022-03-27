@@ -98,3 +98,99 @@ house_data_set = house_data_set %>% mutate(waterfront = as.factor(waterfront),
 - Reviewing Correlation between variables. The closer the correlation between two variables is to 1, the more closely correlated they are. As expected, the sqft_living and number of bathrooms are the two most closely correlated variables to the price.
 
 <img src ="https://github.com/andrejensen302/KingCountyHousingAnalysis/blob/1ba5aa65adc5f4802db5e794e07ab5d093fd1f08/KC_Housing_RMD_files/figure-gfm/unnamed-chunk-3-1.png" width="800" height="500">
+
+- To get a rough idea of the housing prices in this dataset. I also created the following categorical variables to group the data and create averages.
+
+```
+#create categorical variables to analyze mean price against various criteria in the dataset.
+
+#Create variable for Newer Construction (2004 or newer) criteria
+house_data_set = house_data_set %>% mutate(new_construction = ifelse(yr_built >= 2004, TRUE, FALSE))
+
+#Create new variable for four bedroom criteria
+house_data_set = house_data_set %>% mutate(four_bedroom = ifelse(bedrooms >= 4, TRUE, FALSE))
+
+#Create new variable for 3 bathroom criteria
+house_data_set= house_data_set %>% mutate(three_bathroom = ifelse(bathrooms >= 3.00, TRUE, FALSE))
+
+#Create new variable for 4,000 sqft living criteria
+house_data_set= house_data_set %>% mutate(sqft_living_criteria = ifelse(sqft_living >= 4000, TRUE, FALSE))
+
+#Create new variable for 4,000 sqft15 living criteria
+house_data_set= house_data_set %>% mutate(sqft_living15_criteria = ifelse(sqft_living15 >= 4000, TRUE, FALSE))
+
+#Create new variable for Good grade (7+) criteria
+#summary shows that housing grades range from 1 to 13
+house_data_set$grade %>% summary()
+good_grade_values <- c('7', '8', '9', '10', '11', '12', '13')
+house_data_set= house_data_set %>% mutate(good_grade = ifelse(grade %in% good_grade_values, TRUE, FALSE))
+
+#Create variable for good condition (5+) criteria
+house_data_set$condition %>% summary
+good_condition_values <- c('5')
+house_data_set = house_data_set %>% mutate(good_condition = ifelse(condition %in% good_condition_values, TRUE, FALSE))
+
+#Create new variable for 5,000 sqft lot criteria
+house_data_set= house_data_set %>% mutate (sqft_lot_criteria = ifelse(sqft_lot >= 5000, TRUE, FALSE))
+
+#Create new variable for 5,000 sqft_lot15 criteria
+house_data_set= house_data_set %>% mutate (sqft_lot15_criteria = ifelse(sqft_lot15 >= 5000, TRUE, FALSE))
+
+#Add column for log of sqft_living
+
+house_data_set = house_data_set %>% mutate (log_sqft_living = log10(sqft_living))
+
+#Add column for square root of sqft_living
+
+house_data_set = house_data_set %>% mutate(sqrt_sqft_living = sqrt(sqft_living))
+
+#Show quick summary of average prices grouped by the individual criteria above 
+#(four bedroom, three bathroom, 4,000 sqft living, 7+ good grade, 5+ good condition, & 5,000 sqft lot)
+
+#Average price grouped by four bedroom houses
+avg_price_of_four_bedrooms = house_data_set %>% na.omit() %>% 
+  group_by(four_bedroom) %>% 
+  summarize(mean_price = mean(price))
+
+#Average price grouped by three bathrooms houses
+avg_price_of_three_bathrooms = house_data_set %>% na.omit() %>%
+  group_by(three_bathroom) %>% 
+  summarize(mean_price = mean(price)) 
+
+#Average price grouped by 4,000 sqft_living houses
+avg_price_of_4000_sqft = house_data_set %>% na.omit() %>%
+  group_by(sqft_living_criteria) %>% 
+  summarize(mean_price = mean(price)) 
+
+#Average price grouped by 4,000 sqft_living15 houses
+avg_price_of_4000_sqft15 = house_data_set %>% na.omit() %>%
+  group_by(sqft_living15_criteria) %>% 
+  summarize(mean_price = mean(price)) 
+
+#Average price grouped by 5,000 sqft lot houses
+avg_price_of_5000_sqft_lot = house_data_set %>% na.omit() %>%
+  group_by(sqft_lot_criteria) %>% 
+  summarize(mean_price = mean(price)) 
+
+#Average price grouuped by 5,000 sqft_lot15 houses
+avg_price_of_5000_sqft_lot = house_data_set %>% na.omit() %>%
+  group_by(sqft_lot15_criteria) %>% 
+  summarize(mean_price = mean(price)) 
+
+#Average prices grouped by good condition (5+) houses
+avg_price_of_good_condition = house_data_set %>% na.omit() %>%
+  group_by(good_condition) %>% 
+  summarize(mean_price = mean(price)) 
+
+#Average prices grouped by new construction (>2004 construction) houses
+avg_price_of_new_construction = house_data_set %>% na.omit() %>%
+  group_by(new_construction) %>% 
+  summarize(mean_price = mean(price)) 
+
+#Average prices grouped by good grade (7+)
+avg_price_of_good_grade = house_data_set %>% na.omit() %>%
+  group_by(good_grade) %>% 
+  summarize(mean_price = mean(price)) 
+```
+
+
