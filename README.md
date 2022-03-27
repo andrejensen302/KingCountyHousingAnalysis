@@ -1,7 +1,7 @@
 # King County Housing Data - Exploration and Analysis #
 Analysis of King County Housing Dataset
 
-This dataset contains house sale prices for King County, which includes Seattle. It includes homes sold between May 2014 and May 2015. The purpose of this analysis was to evaluate pricing patterns and create predictions using various prediction models (after data exploration and wrangling). Models generated include linear regression, Random Forest Tree Models, and BAGGED Tree models.
+This dataset contains house sale prices for King County, which includes Seattle. It includes homes sold between May 2014 and May 2015. The purpose of this analysis was to evaluate pricing patterns and create a prediction model (after data exploration and wrangling). Models generated include linear regression, Random Forest Tree Models, and BAGGED Tree models.
 
 Libraries used
 
@@ -95,13 +95,12 @@ house_data_set = house_data_set %>% mutate(waterfront = as.factor(waterfront),
 
 ### Data Exploration ###
 
-- Reviewing Correlation between variables. The closer the correlation between two variables is to 1, the more closely correlated they are. As expected, the sqft_living and number of bathrooms are the two most closely correlated variables to the price.
-
-<img src ="https://github.com/andrejensen302/KingCountyHousingAnalysis/blob/1ba5aa65adc5f4802db5e794e07ab5d093fd1f08/KC_Housing_RMD_files/figure-gfm/unnamed-chunk-3-1.png" width="800" height="500">
-
 - To get a rough idea of the housing prices in this dataset. I also created the following categorical variables to group the data and create averages.
 
-```
+<details>
+  <summary>Click here to expand the R Code block used to categorize and summarize the dataset</summary>
+  
+```R Code
 #create categorical variables to analyze mean price against various criteria in the dataset.
 
 #Create variable for Newer Construction (2004 or newer) criteria
@@ -192,5 +191,16 @@ avg_price_of_good_grade = house_data_set %>% na.omit() %>%
   group_by(good_grade) %>% 
   summarize(mean_price = mean(price)) 
 ```
+  </details>
+  
+<img src ="https://github.com/andrejensen302/KingCountyHousingAnalysis/blob/04cf5b3f4ee01e2f1ddc4f557ab0e796ddcb3aca/misc_images/Categorical%20Variables%20results.png" width="800">
 
+- Looking at the price differences, we can see that square footage was the biggest influencer of price out of the variables examined.
+  
+  - Reviewing Correlation between variables. The closer the correlation between two variables is to 1, the more closely correlated they are. As expected, the sqft_living and number of bathrooms are the two most closely correlated variables to the price. We will use the most highly correlated variables 
 
+<img src ="https://github.com/andrejensen302/KingCountyHousingAnalysis/blob/1ba5aa65adc5f4802db5e794e07ab5d093fd1f08/KC_Housing_RMD_files/figure-gfm/unnamed-chunk-3-1.png" width="800" height="500">
+  
+ - The table below shows pairs of variables that had
+  
+ 
