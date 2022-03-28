@@ -53,12 +53,9 @@ $ sqft_lot15    <dbl> 5650, 7639, 8062, 5000, 7503, 101930, 6819, 9711, 8113, 75
 ```
 
 ## Main Problem Questions ##
-
 1. What are the most relevant correlating variables to the price of a house in King County, WA?
 2. Which variables have the biggest correlation to the price of a house in King County, WA?
-
 ## Data Wrangling ##
-
 - Variables Removed
   - ID: Removed because the transaction ID had no relevance to the price.
   - Zipcode: Removed because for the purposes of this analysis, the model will focus on a generalized prediction rather than price differentials between specific zip codes.
@@ -94,7 +91,6 @@ house_data_set = house_data_set %>% mutate(waterfront = as.factor(waterfront),
 ```
 
 ## Data Exploration ##
-
 - To get a rough idea of the housing prices in this dataset. I also created the following categorical variables to group the data and create averages.
 
 <details>
@@ -197,7 +193,7 @@ avg_price_of_good_grade = house_data_set %>% na.omit() %>%
 
 - Looking at the price differences, we can see that square footage was the biggest influencer of price out of the variables examined.
   
-  - Reviewing Correlation between variables. The closer the correlation between two variables is to 1, the more closely correlated they are. As expected, the sqft_living and number of bathrooms are the two most closely correlated variables to the price. We will use the most highly correlated variables 
+- Reviewing Correlation between variables. The closer the correlation between two variables is to 1, the more closely correlated they are. As expected, the sqft_living and number of bathrooms are the two most closely correlated variables to the price. We will use the most highly correlated variables 
 
 <img src ="https://github.com/andrejensen302/KingCountyHousingAnalysis/blob/1ba5aa65adc5f4802db5e794e07ab5d093fd1f08/KC_Housing_RMD_files/figure-gfm/unnamed-chunk-3-1.png" width="800" height="500">
   
@@ -290,9 +286,7 @@ cor.test(house_data_set$price, house_data_set$yr_built) #.054 correlation-
  </details>
  
 ## Model Creation ##
-  
 ### Preprocessing Steps ###
-  
 - Create a new dataset that removes the TRUE/FALSE variables that were created when doing the categorical variable analysis above.
 - Split the data into training and testing sets. P value was set at .80 (80% of the model goes into the training set and the remaining 20% goes to model validation (testing). 
 - Center and scale the data as well as remove near zero variances.
@@ -324,6 +318,69 @@ head(house_data_train_proc)
 head(house_data_test_proc)
 ```
 
-### Model Creation - Linear Regression ###
-
+### Variable Selection for Models ###
+- To keep the run times of the models to a minimum as well as maintain consistency of the variables used in each model. The following variables were selected for use.
+  - Grade
+  - Bathrooms
+  - View
+  - sqft_living
+  - sqft_loft
+  - bedrooms
+  - floors
+  - condition
   
+### Model Creation - Linear Regression ###
+```
+#Create linear regression model
+
+model_fit_lm = train(price ~ grade + bathrooms + view + sqft_living + sqft_above + sqft_lot + bedrooms + floors + condition,
+                     data = house_data_train_proc,
+                     method = 'lm',
+                     metric = 'RMSE',
+                     tuneLength = 10,
+                     trControl = trainControl(method = 'cv', number= 3, savePredictions = TRUE))
+
+pred_lm = predict(model_fit_lm, newdata = house_data_test_proc)
+```
+
+- We will also need to create a dataframe for the errors to help us gauge the accuracy of the model. To see the visual of this, we will plot the predicted price (X-axis) against the observed price (y-axis).
+  
+```
+Create new dataframe for errors - linear regression
+help(data.frame)
+errors_lm = data.frame(predicted_price = pred_lm, observed_price = house_data_test_proc$price,
+                       error = pred_lm - house_data_test_proc$price)
+  
+#plot with the assumption that it rises as fast as it goes forward (slope  = 1)
+plot_lm <- ggplot(data = errors_lm, aes(x = predicted_price, y = observed_price)) +
+  geom_point() + 
+  geom_abline(intercept = 0, slope = 1, color = 'red') +
+  ggtitle("Predicted vs Observed price for KC houses using a linear regression model")
+
+plot_lm
+```
+<img src ="misc_images/Linear Regression error vs actual plot.png" width="800" height="500">
+  
+## Model Creation - Decision Tree Regression Models ##
+### Single Tree Model ###
+- The Single Tree Model below incorporates all favoriables in the dataset. This is so that we have another way to analyze the importance/correlation of the variables in the dataset. In the actual model that will be compared, we will be using a limited set of variables.
+  
+```
+#Growing a single tree
+tree_model_all_variables <- rpart(
+                             formula= price ~.,
+                             data = house_data_train_proc,
+                             method = 'anova',
+                             control = rpart.control(minsplit = 1500, cp=.001)
+                             )
+
+#Show variable importance of variables in the single tree model
+varImp(tree_model_all_variables)
+```
+                            
+                            
+### Model Comparison ###
+                            
+<img src ="misc_images/Model Comparison Dotplot.png" width="800">                            
+                   
+                            
