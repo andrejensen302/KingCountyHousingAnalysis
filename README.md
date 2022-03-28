@@ -289,9 +289,9 @@ cor.test(house_data_set$price, house_data_set$yr_built) #.054 correlation-
 ```
  </details>
  
-##Model Creation##
+## Model Creation ##
   
-###Preprocessing Steps###
+### Preprocessing Steps ###
   
 - Create a new dataset that removes the TRUE/FALSE variables that were created when doing the categorical variable analysis above.
 - Split the data into training and testing sets. P value was set at .80 (80% of the model goes into the training set and the remaining 20% goes to model validation (testing). 
@@ -324,10 +324,6 @@ head(house_data_train_proc)
 head(house_data_test_proc)
 ```
 
-###Model Creation - Linear Regression###
-  
-```
-
-```
+### Model Creation - Linear Regression ###
 
   
