@@ -57,7 +57,7 @@ $ sqft_lot15    <dbl> 5650, 7639, 8062, 5000, 7503, 101930, 6819, 9711, 8113, 75
 1. What are the most relevant correlating variables to the price of a house in King County, WA?
 2. Which variables have the biggest correlation to the price of a house in King County, WA?
 
-### Data Wrangling ###
+## Data Wrangling ##
 
 - Variables Removed
   - ID: Removed because the transaction ID had no relevance to the price.
@@ -93,7 +93,7 @@ house_data_set = house_data_set %>% mutate(waterfront = as.factor(waterfront),
 
 ```
 
-### Data Exploration ###
+## Data Exploration ##
 
 - To get a rough idea of the housing prices in this dataset. I also created the following categorical variables to group the data and create averages.
 
@@ -201,6 +201,133 @@ avg_price_of_good_grade = house_data_set %>% na.omit() %>%
 
 <img src ="https://github.com/andrejensen302/KingCountyHousingAnalysis/blob/1ba5aa65adc5f4802db5e794e07ab5d093fd1f08/KC_Housing_RMD_files/figure-gfm/unnamed-chunk-3-1.png" width="800" height="500">
   
- - The table below shows pairs of variables that had
+ - The table below shows pairs of variables that had above a .70 correlation with each other.
   
+ <img src ="https://github.com/andrejensen302/KingCountyHousingAnalysis/blob/b609219f6063f807dae736feb30e94c2ee576166/misc_images/Correlated%20Variables%20Table.png">
+  
+- Sqft_living, sqft_above, bathrooms, and sqft_lot are all important, numeric variables and have a high degree of correlation.
+- The sqft_living15 and sqft_lot15 were removed from the final model due to their correlation and similarity to the sqft_living and sqft_lot variables.
+  
+ <details>
+   <summary>Click here to see R Code used to calculate the correlation coefficient between all selected variables in the dataset</summary>
+   
+```
+#Calculate correlation coefficients for all variables between other variables
+
+#Correlation coefficient of price to all other numeric variables
+i1 <- sapply(house_data_set, is.numeric)
+y1 <- "price"
+x1 <- setdiff(names(house_data_set)[i1], y1)
+cor_of_price_to_vars <- cor(house_data_set[x1], house_data_set[[y1]])
+
+#Correlation coefficient of bedrooms to all other numeric variables
+i2 <- sapply(house_data_set, is.numeric)
+y2 <- "bedrooms"
+x2 <- setdiff(names(house_data_set)[i2], y2)
+cor_of_bedrooms_to_vars <- cor(house_data_set[x2], house_data_set[[y2]])
+
+#Correlation coefficient of sqft_above to all other numeric variables
+i3 <- sapply(house_data_set, is.numeric)
+y3 <- "sqft_above"
+x3 <- setdiff(names(house_data_set)[i3], y3)
+cor_of_sqft_above_to_vars <- cor(house_data_set[x3], house_data_set[[y3]])
+
+#Correlation coefficient of sqft_living to all other numeric variables
+i4 <- sapply(house_data_set, is.numeric)
+y4 <- "sqft_living"
+x4 <- setdiff(names(house_data_set)[i4], y4)
+cor_of_sqft_living_to_vars <- cor(house_data_set[x4], house_data_set[[y4]])
+
+#Correlation coefficient of sqft_lot to all other numeric variables
+i5 <- sapply(house_data_set, is.numeric)
+y5 <- "sqft_lot"
+x5 <- setdiff(names(house_data_set)[i5], y5)
+cor_of_sqft_lot_to_vars <- cor(house_data_set[x5], house_data_set[[y5]])
+
+#Correlation coefficient of sqft_lot15 to all other numeric variables
+i6 <- sapply(house_data_set, is.numeric)
+y6 <- "sqft_lot15"
+x6 <- setdiff(names(house_data_set)[i6], y6)
+cor_of_sqft_lot15_to_vars <- cor(house_data_set[x6], house_data_set[[y6]])
+
+#Correlation coefficient of sqft_living15 to all other numeric variables
+i7 <- sapply(house_data_set, is.numeric)
+y7 <- "sqft_living15"
+x7 <- setdiff(names(house_data_set)[i7], y7)
+cor_of_sqft_living15_to_vars <- cor(house_data_set[x7], house_data_set[[y7]])
+
+#Correlation coefficient of floors to all other numeric variables
+i8 <- sapply(house_data_set, is.numeric)
+y8 <- "floors"
+x8 <- setdiff(names(house_data_set)[i8], y8)
+cor_of_floors_to_vars <- cor(house_data_set[x8], house_data_set[[y8]])
+
+#Correlation coefficient of sqft_basement to all other numeric variables
+i9 <- sapply(house_data_set, is.numeric)
+y9 <- "sqft_basement"
+x9 <- setdiff(names(house_data_set)[i9], y9)
+cor_of_sqft_basement_to_vars <- cor(house_data_set[x9], house_data_set[[y9]])
+
+#Correlation coefficient of yr_built to all other numeric variables
+i10 <- sapply(house_data_set, is.numeric)
+y10 <- "yr_built"
+x10 <- setdiff(names(house_data_set)[i10], y10)
+cor_of_yr_built_to_vars <- cor(house_data_set[x10], house_data_set[[y10]])
+
+#Spot check formula above 
+cor.test(house_data_set$price, house_data_set$sqft_lot15) #.082 correlation
+cor.test(house_data_set$price, house_data_set$sqft_living) #.702 correlation
+cor.test(house_data_set$price, house_data_set$sqft_above) #.606 correlation
+cor.test(house_data_set$price, house_data_set$sqft_living15) #.585 correlation
+cor.test(house_data_set$price, house_data_set$bathrooms) #.525 correlation
+cor.test(house_data_set$price, house_data_set$sqft_basement) #.324 correlation
+cor.test(house_data_set$price, house_data_set$bedrooms) #.308 correlation
+cor.test(house_data_set$price, house_data_set$floors) #.257 correlation
+cor.test(house_data_set$price, house_data_set$sqft_lot) #.089 correlation
+cor.test(house_data_set$price, house_data_set$yr_built) #.054 correlation-
+   
+```
+ </details>
  
+##Model Creation##
+  
+###Preprocessing Steps###
+  
+- Create a new dataset that removes the TRUE/FALSE variables that were created when doing the categorical variable analysis above.
+- Split the data into training and testing sets. P value was set at .80 (80% of the model goes into the training set and the remaining 20% goes to model validation (testing). 
+- Center and scale the data as well as remove near zero variances.
+  
+```
+#Remove true/false variables for model training datasets
+
+model_data_set = select(house_data_set, -four_bedroom, -three_bathroom, -sqft_living15_criteria, -good_condition, -new_construction,
+                        -good_grade, -sqft_lot_criteria, -sqft_lot15_criteria)
+
+#Split data into test and train set
+in_train = createDataPartition(y = model_data_set$price, p = .80, list = FALSE)
+head(in_train)
+  
+#Display all columns in both training and testing sets
+house_data_training_set = model_data_set[in_train, ]
+house_data_testing_set = model_data_set[-in_train, ]
+
+# Look for and remove near zero variances (sqft_basement, wate)
+nearZeroVar(house_data_training_set, saveMetrics = TRUE)
+  
+preprocessing_steps = preProcess(select(model_data_set, bedrooms, bathrooms, sqft_living, sqft_lot, floors, sqft_above, sqft_basement),
+           method = c('center', 'scale', 'nzv'))
+
+house_data_train_proc = predict(preprocessing_steps, newdata = house_data_training_set)
+house_data_test_proc = predict(preprocessing_steps, newdata = house_data_testing_set)
+
+head(house_data_train_proc)
+head(house_data_test_proc)
+```
+
+###Model Creation - Linear Regression###
+  
+```
+
+```
+
+  
