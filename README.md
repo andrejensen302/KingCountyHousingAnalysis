@@ -55,6 +55,7 @@ $ sqft_lot15    <dbl> 5650, 7639, 8062, 5000, 7503, 101930, 6819, 9711, 8113, 75
 ## Main Problem Questions ##
 1. What are the most relevant correlating variables to the price of a house in King County, WA?
 2. Which variables have the biggest correlation to the price of a house in King County, WA?
+3. Can we generate a model for price prediction?
 ## Data Wrangling ##
 - Variables Removed
   - ID: Removed because the transaction ID had no relevance to the price.
@@ -359,28 +360,70 @@ plot_lm <- ggplot(data = errors_lm, aes(x = predicted_price, y = observed_price)
 
 plot_lm
 ```
-<img src ="misc_images/Linear Regression error vs actual plot.png" width="800" height="500">
+<img src ="misc_images/Linear Regression error vs actual plot.png" width="900" height="500">
   
 ## Model Creation - Decision Tree Regression Models ##
 ### Single Tree Model ###
-- The Single Tree Model below incorporates all favoriables in the dataset. This is so that we have another way to analyze the importance/correlation of the variables in the dataset. In the actual model that will be compared, we will be using a limited set of variables.
+- The Single Tree Model below incorporates the same variables that we used in the linear regression model. This is so that we have another way to analyze the the dataset using the same set of inputs.
   
 ```
-#Growing a single tree
-tree_model_all_variables <- rpart(
-                             formula= price ~.,
-                             data = house_data_train_proc,
-                             method = 'anova',
-                             control = rpart.control(minsplit = 1500, cp=.001)
-                             )
+#Single tree model with limited predictor variables that align with the linear regression model
+tree_model <- rpart(
+  formula = price ~ grade + bathrooms + view + sqft_living + sqft_above + sqft_lot + bedrooms + floors + condition,
+  data = house_data_train_proc,
+  method = 'anova',
+  control = rpart.control(minsplit = 1750, cp=.001)
+)
 
-#Show variable importance of variables in the single tree model
-varImp(tree_model_all_variables)
+rpart.plot(tree_model)
+summary(tree_model)
+                        
 ```
+The Tree Regression model below shows the partitions the data into smaller groups and then fit a simple model (constant) for each subgroup. For this particular dataset the first split off occurs at the housing grade. The second split off occurs at the square footage of the property. This repeats until until we get to the bottom of the decision tree where it predicts a rough housing price. Please note the the numbering is in scientific notation due to it being the formatting by R Studio.
+              
+<img src ="misc_images/single_treeplot.png" width="900">              
+
+Building off of the what we did with the single tree model I also generated a Random Forest and Bagged Tree Model (see below for the code).
+  
+```
+#Bagging tree model
+
+train_control_bagged_model <- trainControl(method="cv", number=3, savePredictions = TRUE)
+
+bagged_tree_model <- train(
+  price ~ grade + bathrooms + view + sqft_living + sqft_above + sqft_lot + bedrooms + floors + condition,
+  data = house_data_train_proc,
+  method = 'treebag',
+  trControl = train_control_bagged_model,
+  importance = TRUE
+)
+
+#Random Forest Model
+random_forest_tree_model <- train(
+  price ~ grade + bathrooms + view + sqft_living + sqft_above + sqft_lot + bedrooms + floors + condition,
+  data = house_data_train_proc,
+  method = 'rf',
+  trControl = train_control_bagged_model,
+  importance = TRUE,
+  ntree=3
+)
+```
+                     
+### Model Comparison ###     
                             
+we tested three different models (random forest, bagged tree model, and linear regression) and used three fold cross validation. In general, the lower the RMSE and MAE values the better the model performance. For the linear regression model would be the most reliable model for this dataset.
+
                             
-### Model Comparison ###
-                            
-<img src ="misc_images/Model Comparison Dotplot.png" width="800">                            
+<img src ="misc_images/Model Comparison Dotplot.png" width="900">    
+  
+#### Random Forest #### 
+<img src ="misc_images/Random Forest summary output.png">   
+
+#### Bagged CART #### 
+<img src ="misc_images/Bagged Tree Summary output.png">   
+
+#### Linear Regression ####
+<img src ="misc_images/Linear Regression Summary output.png">   
+
                    
                             
